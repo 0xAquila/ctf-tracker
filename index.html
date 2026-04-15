@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HackLog — CTF Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.png" sizes="32x32">
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="hm-global-tip"></div>
+<div id="xpPop">
+  <div class="xp-label">XP Gained</div>
+  <div class="xp-val" id="xpPopVal">+50 XP</div>
+  <div class="xp-bar-track"><div class="xp-bar-fill" id="xpPopFill" style="width:0%"></div></div>
+</div>
+
+<!-- ══════════════ PWNED OVERLAY ══════════════ -->
+<div id="pwnOverlay"></div>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav class="nav" id="mainNav">
+  <div class="nav-brand" onclick="goProfile()">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    HackLog
+  </div>
+  <div class="nav-sep"></div>
+  <span class="nav-crumb" id="navCrumb">Dashboard</span>
+
+  <div id="navTimerPill" style="display:none" class="nav-timer-pill" onclick="goActiveSession()">
+    <span class="live-dot"></span>
+    <span id="navTimerVal">00:00:00</span>
+  </div>
+
+  <div class="nav-right">
+    <div class="level-chip">
+      <span id="navLvl">L1</span>
+      <div class="level-chip-bar"><div class="level-chip-fill" id="navXpBar" style="width:0%"></div></div>
+      <span id="navXpPts" style="color:var(--t3);font-size:11px">0xp</span>
+    </div>
+    <!-- Home/Profile -->
+    <button class="icon-btn" onclick="goProfile()" title="Dashboard / Profile" id="homeBtn">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+    <!-- Theme toggle -->
+    <button class="icon-btn" onclick="toggleTheme()" title="Cycle theme" id="themeBtn">
+      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="goStudy()" title="Study Lab">
+      <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="openAch()" title="Achievements">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modalNew')">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Session
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════ PROFILE VIEW ══════════════ -->
+<div class="view active" id="profileView">
+  <div class="profile-wrap">
+
+    <!-- Hero -->
+    <div class="hero-section">
+      <div class="hero-top">
+        <div class="avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Click to change profile image">
+          <div class="avatar" id="profileAvatar">H<div class="online-dot"></div></div>
+          <div class="avatar-overlay"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
+        </div>
+        <div class="hero-meta">
+          <div class="hero-name" id="profileHandle">Hacker</div>
+          <div class="hero-sub" id="profileTag">Welcome to HackLog — your personal CTF companion.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm hero-edit" onclick="openModal('modalProfile')">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--accentbg);color:var(--accent)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-val" id="kpi-time">0h</div>
+          <div class="stat-label">Hacking Time</div>
+          <div class="stat-sub" id="kpi-time-sub">total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--purplebg);color:var(--purple)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="stat-val" id="kpi-pwned">0</div>
+          <div class="stat-label">Sessions Solved</div>
+          <div class="stat-sub" id="kpi-pwned-sub">0 day streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--amberbg);color:var(--amber)">
+            <svg viewBox="0 0 24 24"><polygon points="14.5 10 12.5 10 8 22 16 22"/><path d="M8.5 14H4a2 2 0 0 1-1.9-2.63l1.85-5.56A2 2 0 0 1 5.83 4H12l5 6"/><path d="M15 14h4.17a2 2 0 0 1 1.9 2.63l-1.85 5.56A2 2 0 0 1 17.17 24H11"/></svg>
+          </div>
+          <div class="stat-val" id="kpi-flags">0</div>
+          <div class="stat-label">Flags Captured</div>
+          <div class="stat-sub" id="kpi-flags-sub">0 user · 0 root</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--greenbg);color:var(--green)">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div class="stat-val" id="kpi-rate">—</div>
+          <div class="stat-label">Solve Rate</div>
+          <div class="stat-sub" id="kpi-rate-sub">avg: —</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level + Difficulty -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="level-card-full">
+        <div class="level-ring-wrap">
+          <svg viewBox="0 0 80 80">
+            <circle class="lr-track" cx="40" cy="40" r="32"/>
+            <circle class="lr-fill" id="lcFill" cx="40" cy="40" r="32" stroke-dasharray="201.1" stroke-dashoffset="201.1"/>
+          </svg>
+          <div class="lr-num" id="lcNum">1</div>
+        </div>
+        <div class="level-info">
+          <div class="level-name" id="lvlMain">Level 1</div>
+          <div class="level-title" id="lvlTitle">Newcomer</div>
+          <div class="level-bar-wrap"><div class="level-bar-fill" id="lvlXpBar" style="width:0%"></div></div>
+          <div class="level-bar-labels"><span id="lvlXpCur">0 XP</span><span id="lvlXpNext">200 to next</span></div>
+        </div>
+      </div>
+      <div class="diff-card">
+        <div class="section-title" style="margin-bottom:14px">Difficulty Breakdown</div>
+        <div class="diff-row">
+          <div class="diff-label" style="color:var(--green)">Easy</div>
+          <div class="diff-track"><div class="diff-fill" id="diff-easy" style="width:0%;background:var(--green)"></div></div>
+          <div class="diff-count" id="diff-easy-v">0</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-label" style="color:var(--amber)">Medium</div>
+          <div class="diff-track"><div class="diff-fill" id="diff-med" style="width:0%;background:var(--amber)"></div></div>
+          <div class="diff-count" id="diff-med-v">0</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-label" style="color:var(--red)">Hard</div>
+          <div class="diff-track"><div class="diff-fill" id="diff-hard" style="width:0%;background:var(--red)"></div></div>
+          <div class="diff-count" id="diff-hard-v">0</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-label" style="color:var(--purple)">Insane</div>
+          <div class="diff-track"><div class="diff-fill" id="diff-insane" style="width:0%;background:var(--purple)"></div></div>
+          <div class="diff-count" id="diff-insane-v">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="section-wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Activity</div>
+          <div class="section-sub" id="heatmap-stat">No activity yet</div>
+        </div>
+        <span style="font-size:12px;color:var(--t3)" id="streak-label"></span>
+      </div>
+      <div class="heatmap-card">
+        <div class="hm-scroll">
+          <div class="hm-months" id="hmMonths"></div>
+          <div class="hm-grid" id="hmGrid"></div>
+        </div>
+        <div class="hm-legend">
+          <span>Less</span>
+          <div class="hcell"></div>
+          <div class="hcell l1"></div>
+          <div class="hcell l2"></div>
+          <div class="hcell l3"></div>
+          <div class="hcell l4"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Progress -->
+    <div class="section-wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Weekly Progress</div>
+          <div class="section-sub">This week vs last week</div>
+        </div>
+      </div>
+      <div class="weekly-card" id="weeklyCard">
+        <div class="weekly-grid" id="weeklyGrid"></div>
+      </div>
+    </div>
+
+    <!-- Activity Graph -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="graph-card">
+        <div class="section-title" style="margin-bottom:4px">Daily Activity</div>
+        <div class="section-sub" style="margin-bottom:12px">Minutes hacking per day (last 14 days)</div>
+        <div class="graph-bar-row" id="activityGraph"></div>
+      </div>
+      <div class="graph-card">
+        <div class="section-title" style="margin-bottom:4px">Skills Breakdown</div>
+        <div class="section-sub" style="margin-bottom:0">Progress by attack phase</div>
+        <div class="skill-grid" id="skillGrid"></div>
+      </div>
+    </div>
+
+    <!-- Sessions -->
+    <div class="section-wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Your Sessions</div>
+          <div class="section-sub">Click a session to continue working on it</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modalNew')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Session
+        </button>
+      </div>
+      <div class="sessions-card">
+        <div class="sessions-head">
+          <div class="sessions-head-title">Recent Activity</div>
+        </div>
+        <div id="sessionList">
+          <div class="sessions-empty">
+            <svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--t3);fill:none;stroke-width:1.3;stroke-linecap:round;display:block;margin:0 auto 12px"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            No sessions yet.<br>Click <strong>New Session</strong> to start tracking your first CTF.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="section-wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Data Management</div>
+          <div class="section-sub">Export, import, or wipe your account data</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0">
+        <button class="btn btn-ghost" onclick="exportData()">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Data
+        </button>
+        <label class="btn btn-ghost" style="cursor:pointer">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import Data
+          <input type="file" accept=".json" style="display:none" onchange="importData(this)">
+        </label>
+        <button class="btn btn-danger" onclick="confirmDeleteData()">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Delete All Data
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ APP VIEW ══════════════ -->
+<div class="view" id="appView">
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sb-header">
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="goProfile()">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Dashboard
+        </button>
+        <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="openModal('modalNew')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Session
+        </button>
+      </div>
+      <div class="sb-section-label">Sessions</div>
+      <div class="target-list" id="targetList"></div>
+      <div class="sb-footer" id="sbFooter" style="display:none">
+        <div class="sb-footer-stats">
+          <div class="sfs-item"><div class="sfs-val" id="ss-total">0</div><div class="sfs-label">total</div></div>
+          <div class="sfs-item"><div class="sfs-val" id="ss-flags">0</div><div class="sfs-label">flags</div></div>
+          <div class="sfs-item"><div class="sfs-val" id="ss-pwned">0</div><div class="sfs-label">solved</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="ws-main" id="wsMain">
+      <div class="ws-empty" id="emptyState">
+        <div class="ws-empty-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <div class="ws-empty-title">No Session Selected</div>
+        <div class="ws-empty-sub">Pick a session from the sidebar, or create a new one.</div>
+        <button class="btn btn-primary" onclick="openModal('modalNew')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Session
+        </button>
+      </div>
+
+      <div id="workspace" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+        <!-- Completed banner -->
+        <div class="completed-banner" id="pwnBanner" style="display:none">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div>
+            <div class="completed-banner-text">Session Solved!</div>
+            <div class="completed-banner-sub" id="pwnTime"></div>
+          </div>
+        </div>
+
+        <!-- Session timer bar -->
+        <div class="session-topbar" id="sessionBar" style="display:none">
+          <div class="session-timer-group">
+            <div>
+              <div class="session-timer-label">Session Time</div>
+              <div class="session-timer-val" id="sessionTimerVal">00:00:00</div>
+            </div>
+            <button class="pause-btn" id="pauseBtn" onclick="togglePause()">Pause</button>
+          </div>
+          <div class="session-topbar-right">
+            <span style="font-size:12px;color:var(--t3)" id="sbDate"></span>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ws-tabs">
+          <button class="tab-btn active" onclick="switchTab('overview',this)">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Overview
+          </button>
+          <button class="tab-btn" onclick="switchTab('checklist',this)">
+            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Steps
+          </button>
+          <button class="tab-btn" onclick="switchTab('commands',this)">
+            <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            Commands
+          </button>
+          <button class="tab-btn" onclick="switchTab('notes',this)">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Notes
+          </button>
+          <button class="tab-btn" onclick="switchTab('findings',this)">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Findings
+          </button>
+          <button class="tab-btn" onclick="switchTab('ai',this)" title="AI Assistant">
+            <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+            AI
+          </button>
+          <div style="margin-left:auto;padding-right:14px;display:flex;align-items:center">
+            <span style="font-size:12px;color:var(--t3);font-family:var(--mono)" id="targetChip">—</span>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tabContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDY VIEW ══════════════ -->
+<div class="view" id="studyView" style="display:none">
+  <div class="study-wrap">
+    <div class="study-hero">
+      <div class="study-hero-left">
+        <h2>Study Lab</h2>
+        <p>Your personal knowledge base — cheat sheets, writeups, and notes all in one place.</p>
+      </div>
+      <div id="studyHeroAction"></div>
+    </div>
+    <!-- Section switcher -->
+    <div class="study-section-tabs">
+      <button class="study-stab" id="stab-sheets" onclick="switchStudySection('sheets')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        Cheat Sheets
+      </button>
+      <button class="study-stab" id="stab-writeups" onclick="switchStudySection('writeups')">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Writeup Journal
+      </button>
+      <button class="study-stab" id="stab-blog" onclick="switchStudySection('blog')">
+        <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Notes & Blog
+      </button>
+    </div>
+    <div class="study-tabs" id="studyTabs"></div>
+    <div id="studyContent"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Blog Editor ══════════════ -->
+<div class="modal-bg" id="modalBlog" onclick="if(event.target===this)closeModal('modalBlog')">
+  <div class="modal-card" style="width:600px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="blogModalTitle">New Blog Post</div>
+      <button class="modal-close" onclick="closeModal('modalBlog')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="f-grp"><label>Title <span style="color:var(--red)">*</span></label><input type="text" id="blog-title" placeholder="e.g. TCP/IP Fundamentals" autocomplete="off"></div>
+    <div class="fg2">
+      <div class="f-grp"><label>Category</label>
+        <select id="blog-cat">
+          <option value="web">Web Security</option>
+          <option value="crypto">Cryptography</option>
+          <option value="forensics">Forensics</option>
+          <option value="osint">OSINT</option>
+          <option value="networking">Networking</option>
+          <option value="tools">Tools & Techniques</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="f-grp"><label>Tags (comma separated)</label><input type="text" id="blog-tags" placeholder="tcp, ip, osi-model" autocomplete="off"></div>
+    </div>
+    <div class="f-grp"><label>Description</label><input type="text" id="blog-desc" placeholder="Brief summary of the post" autocomplete="off"></div>
+    <div class="f-grp blog-editor-body"><label>Content (Markdown supported)</label><textarea id="blog-body" placeholder="# Your content here...&#10;&#10;Write using markdown: **bold**, *italic*, `code`, ```code blocks```&#10;&#10;## Subheading&#10;- Bullet points&#10;- More points"></textarea></div>
+    <input type="hidden" id="blog-edit-id" value="">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalBlog')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBlogPost()">Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Cheat Sheet ══════════════ -->
+<div class="modal-bg" id="modalSheet" onclick="if(event.target===this)closeModal('modalSheet')">
+  <div class="modal-card" style="width:620px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="sheetModalTitle">New Cheat Sheet</div>
+      <button class="modal-close" onclick="closeModal('modalSheet')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="fg2">
+      <div class="f-grp"><label>Title <span style="color:var(--red)">*</span></label><input type="text" id="sheet-title" placeholder="e.g. nmap Quick Reference" autocomplete="off"></div>
+      <div class="f-grp"><label>Category</label>
+        <select id="sheet-cat">
+          <option value="web">Web</option>
+          <option value="network">Network</option>
+          <option value="crypto">Crypto</option>
+          <option value="forensics">Forensics</option>
+          <option value="osint">OSINT</option>
+          <option value="tools">Tools</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-grp"><label>Content (commands, payloads, notes — code blocks supported)</label><textarea id="sheet-content" style="min-height:200px;font-family:var(--mono);font-size:13px" placeholder="# nmap&#10;nmap -sV -sC -p- --min-rate 5000 -T4 &lt;IP&gt;&#10;&#10;# gobuster&#10;gobuster dir -u http://&lt;IP&gt; -w /usr/share/seclists/..."></textarea></div>
+    <input type="hidden" id="sheet-edit-id" value="">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalSheet')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSheet()">Save Sheet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Writeup ══════════════ -->
+<div class="modal-bg" id="modalWriteup" onclick="if(event.target===this)closeModal('modalWriteup')">
+  <div class="modal-card" style="width:640px">
+    <div class="modal-hdr">
+      <div class="modal-title" id="writeupModalTitle">New Writeup</div>
+      <button class="modal-close" onclick="closeModal('modalWriteup')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="fg2">
+      <div class="f-grp"><label>Session / Room Name <span style="color:var(--red)">*</span></label><input type="text" id="wu-title" placeholder="e.g. THM — RootMe" autocomplete="off"></div>
+      <div class="f-grp"><label>Platform</label><select id="wu-platform"><option>TryHackMe</option><option>HackTheBox</option><option>PicoCTF</option><option>CTFtime</option><option>Other</option></select></div>
+    </div>
+    <div class="fg2">
+      <div class="f-grp"><label>Category</label>
+        <select id="wu-cat">
+          <option value="room">Room</option>
+          <option value="web">Web</option>
+          <option value="crypto">Crypto</option>
+          <option value="forensics">Forensics</option>
+          <option value="osint">OSINT</option>
+          <option value="network">Network</option>
+          <option value="misc">Misc</option>
+        </select>
+      </div>
+      <div class="f-grp"><label>Difficulty</label><select id="wu-diff"><option>Easy</option><option selected>Medium</option><option>Hard</option><option>Insane</option></select></div>
+    </div>
+    <div class="f-grp"><label>Linked Session (optional)</label>
+      <select id="wu-linked"><option value="">— None —</option></select>
+    </div>
+    <div class="f-grp">
+      <label>Writeup (Markdown — methodology, steps, key learnings)</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <label class="btn btn-ghost" style="cursor:pointer;font-size:12px;padding:5px 12px;margin:0">
+          ↑ Upload .md file
+          <input type="file" id="wu-md-upload" accept=".md,.txt" style="display:none" onchange="importWriteupMd(this)">
+        </label>
+        <span id="wu-md-filename" style="font-size:12px;color:var(--t3)"></span>
+      </div>
+      <textarea id="wu-body" style="min-height:180px" placeholder="## Recon&#10;Started with nmap...&#10;&#10;## Exploitation&#10;Found SQLi in...&#10;&#10;## Key Learnings&#10;..."></textarea>
+    </div>
+    <input type="hidden" id="wu-edit-id" value="">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalWriteup')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWriteup()">Save Writeup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Profile ══════════════ -->
+<div class="modal-bg" id="modalProfile" onclick="if(event.target===this)closeModal('modalProfile')">
+  <div class="modal-card">
+    <div class="modal-hdr">
+      <div class="modal-title">Edit Profile</div>
+      <button class="modal-close" onclick="closeModal('modalProfile')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="f-grp"><label>Your Name / Handle</label><input type="text" id="pf-handle" placeholder="e.g. h4cker99" autocomplete="off"></div>
+    <div class="f-grp"><label>Tagline</label><input type="text" id="pf-tag" placeholder="e.g. coffee → shells → root" autocomplete="off"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalProfile')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: New Session ══════════════ -->
+<div class="modal-bg" id="modalNew" onclick="if(event.target===this)closeModal('modalNew')">
+  <div class="modal-card">
+    <div class="modal-hdr">
+      <div class="modal-title">New Session</div>
+      <button class="modal-close" onclick="closeModal('modalNew')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="f-grp"><label>Session Name <span style="color:var(--red)">*</span></label><input type="text" id="f-name" placeholder="e.g. THM-RootMe" autocomplete="off"></div>
+    <div class="fg2">
+      <div class="f-grp"><label>IP / URL</label><input type="text" id="f-ip" placeholder="10.10.11.227 or room URL" autocomplete="off"></div>
+      <div class="f-grp"><label>Operating System</label><select id="f-os"><option>Unknown</option><option>Linux</option><option>Windows</option><option>Windows AD</option><option>FreeBSD</option><option>macOS</option></select></div>
+    </div>
+    <div class="fg2">
+      <div class="f-grp"><label>Difficulty</label><select id="f-diff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="insane">Insane</option></select></div>
+      <div class="f-grp"><label>Platform</label><select id="f-platform"><option selected>TryHackMe</option><option>HackTheBox</option><option>PicoCTF</option><option>CTFtime</option><option>PG Practice</option><option>VulnHub</option><option>Custom Lab</option></select></div>
+    </div>
+    <div class="fg2">
+      <div class="f-grp"><label>Challenge Type</label><select id="f-type"><option value="room">Room (TryHackMe)</option><option value="web">Web</option><option value="crypto">Crypto</option><option value="forensics">Forensics</option><option value="osint">OSINT</option><option value="network">Network</option><option value="misc">Misc</option></select></div>
+      <div class="f-grp"></div>
+    </div>
+    <div class="f-grp"><label>Initial Notes (optional)</label><textarea id="f-desc" placeholder="What do you know about this challenge? Any hints?"></textarea></div>
+    <div class="session-start-tip">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Timer starts automatically when you create the session.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalNew')">Cancel</button>
+      <button class="btn btn-primary" onclick="createTarget()">Start Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Finding ══════════════ -->
+<div class="modal-bg" id="modalFinding" onclick="if(event.target===this)closeModal('modalFinding')">
+  <div class="modal-card">
+    <div class="modal-hdr">
+      <div class="modal-title">Log a Finding</div>
+      <button class="modal-close" onclick="closeModal('modalFinding')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="f-grp"><label>Type of Finding</label>
+      <select id="fi-type">
+        <option value="flag_user">User Flag (user.txt)</option>
+        <option value="flag_root">Root Flag (root.txt)</option>
+        <option value="creds">Credentials (username:password)</option>
+        <option value="hash">Password Hash</option>
+        <option value="vuln">Vulnerability / CVE</option>
+        <option value="port">Open Port / Service</option>
+        <option value="note">Other</option>
+      </select>
+    </div>
+    <div class="f-grp"><label>Value <span style="color:var(--red)">*</span></label><input type="text" id="fi-value" placeholder="HTB{...} or admin:password123 or CVE-2021-xxxx" autocomplete="off"></div>
+    <div class="fg2">
+      <div class="f-grp"><label>Severity</label>
+        <select id="fi-sev">
+          <option value="info">Info</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="f-grp"><label>Time Found</label><input type="text" id="fi-time" placeholder="auto-filled" autocomplete="off"></div>
+    </div>
+    <div class="f-grp"><label>Context / Notes</label><textarea id="fi-ctx" placeholder="Where did you find this? How did you exploit it?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalFinding')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFinding()">Log Finding</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: Delete ══════════════ -->
+<div class="modal-bg" id="modalDel" onclick="if(event.target===this)closeModal('modalDel')">
+  <div class="modal-card" style="width:380px">
+    <div class="modal-hdr">
+      <div class="modal-title">Delete Session</div>
+      <button class="modal-close" onclick="closeModal('modalDel')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <p style="font-size:14px;color:var(--t2);line-height:1.7">Delete <strong id="delName" style="color:var(--t1)">—</strong>? All data including notes and findings will be permanently erased.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalDel')">Cancel</button>
+      <button class="btn btn-danger" onclick="execDelete()">Delete Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ACHIEVEMENTS ══════════════ -->
+<div class="ach-bg" id="achModal" onclick="if(event.target===this)closeAch()">
+  <div class="ach-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:16px;font-weight:700;color:var(--t1)">Achievements</div>
+      <button class="modal-close" onclick="closeAch()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="font-size:13px;color:var(--t3);margin-bottom:14px" id="achSub">0 / 0 unlocked</div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--t3);margin-bottom:6px"><span>Level <span id="achLvl">1</span></span><span id="achXpLbl">0 / 200 XP</span></div>
+      <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden"><div id="achXpBar" style="height:100%;background:var(--accent);transition:width .5s;border-radius:4px;width:0%"></div></div>
+    </div>
+    <div class="ach-grid" id="achGrid"></div>
+  </div>
+</div>
+
+<!-- ══════════════ ONBOARDING ══════════════ -->
+<div class="onboard-bg" id="onboardModal">
+  <div class="onboard-card">
+    <div class="onboard-hero">
+      <div class="onboard-logo">
+        <div class="onboard-logo-icon">
+          <svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <div class="onboard-brand">HackLog</div>
+          <div class="onboard-tagline">Your personal CTF mancave</div>
+        </div>
+      </div>
+      <div class="onboard-desc">Track CTF challenges, capture flags, study cheat sheets, write up your solutions, and level up — all in one place. Private, no account needed.</div>
+    </div>
+    <div class="onboard-steps">
+      <div class="ob-step">
+        <div class="ob-num">1</div>
+        <div><div class="ob-title">Start a challenge</div><div class="ob-desc">Enter the room name and pick the challenge type. Timer starts immediately.</div></div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">2</div>
+        <div><div class="ob-title">Work through the checklist</div><div class="ob-desc">Universal base phases + a type-specific checklist (Web, Crypto, Forensics, OSINT).</div></div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">3</div>
+        <div><div class="ob-title">Log findings & write up</div><div class="ob-desc">Record flags, creds, and vulnerabilities. Document your solution in the Writeup Journal.</div></div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">4</div>
+        <div><div class="ob-title">Study in the Study Lab</div><div class="ob-desc">Browse cheat sheets, write notes, and build your personal knowledge base.</div></div>
+      </div>
+    </div>
+    <div class="onboard-footer">
+      <div class="ob-note">All your data stays on your device — no accounts, no cloud, complete privacy.</div>
+      <div class="ob-handle-row">
+        <input class="ob-handle" id="obHandle" type="text" placeholder="Enter your hacker name..." autocomplete="off">
+        <button class="btn btn-primary" onclick="finishOnboard()">Get Started</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="app.js" defer></script>
+</body>
+</html>
