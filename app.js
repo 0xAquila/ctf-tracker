@@ -330,7 +330,7 @@ function renderProfile(){
   const handle=pf.handle||'Hacker';
   const tag=pf.tagline||'Welcome to HackLog — your personal CTF companion.';
   const av=E('profileAvatar'),ph=E('profileHandle'),pt=E('profileTag');
-  if(av)av.childNodes[0].nodeValue=handle.slice(0,2).toUpperCase();
+  if(av){const src=pf.avatarUrl||'screenshots/FlagWave.gif';av.innerHTML=`<img class="avatar-img" src="${src}" alt="avatar"><div class="online-dot"></div>`;}
   if(ph)ph.textContent=handle;if(pt)pt.textContent=tag;
   const hEl=E('pf-handle'),tEl=E('pf-tag');
   if(hEl)hEl.value=pf.handle||'';if(tEl)tEl.value=pf.tagline||'';
