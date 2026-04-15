@@ -982,11 +982,8 @@ function handleAvatarUpload(input){
 function renderAvatar(){
   const pf=getProfile();const av=E('profileAvatar');if(!av)return;
   const handle=pf.handle||'Hacker';
-  if(pf.avatarUrl){
-    av.innerHTML=`<img class="avatar-img" src="${pf.avatarUrl}" alt="avatar"><div class="online-dot"></div>`;
-  } else {
-    av.innerHTML=`${handle.slice(0,2).toUpperCase()}<div class="online-dot"></div>`;
-  }
+  const src=pf.avatarUrl||'screenshots/FlagWave.gif';
+  av.innerHTML=`<img class="avatar-img" src="${src}" alt="avatar"><div class="online-dot"></div>`;
 }
 
 /* ═══════════════ WEEKLY PROGRESS ═════════ */
